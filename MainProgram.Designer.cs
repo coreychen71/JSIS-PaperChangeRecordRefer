@@ -42,13 +42,12 @@
             this.lblUserIdNull = new System.Windows.Forms.Label();
             this.btnRefer = new System.Windows.Forms.Button();
             this.dgvDataShow = new System.Windows.Forms.DataGridView();
-            this.lblPageNumShow = new System.Windows.Forms.Label();
             this.lblPaperNum = new System.Windows.Forms.Label();
             this.txtPaperNum = new System.Windows.Forms.TextBox();
             this.lbl00 = new System.Windows.Forms.Label();
             this.btnClear = new System.Windows.Forms.Button();
-            this.lnklblPageUp = new System.Windows.Forms.LinkLabel();
-            this.lnklblPageDown = new System.Windows.Forms.LinkLabel();
+            this.btnReport = new System.Windows.Forms.Button();
+            this.btnExcel = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvDataShow)).BeginInit();
             this.SuspendLayout();
             // 
@@ -166,7 +165,7 @@
             // btnRefer
             // 
             this.btnRefer.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.btnRefer.Location = new System.Drawing.Point(583, 76);
+            this.btnRefer.Location = new System.Drawing.Point(550, 78);
             this.btnRefer.Name = "btnRefer";
             this.btnRefer.Size = new System.Drawing.Size(75, 35);
             this.btnRefer.TabIndex = 11;
@@ -182,16 +181,6 @@
             this.dgvDataShow.RowTemplate.Height = 24;
             this.dgvDataShow.Size = new System.Drawing.Size(760, 470);
             this.dgvDataShow.TabIndex = 12;
-            // 
-            // lblPageNumShow
-            // 
-            this.lblPageNumShow.AutoSize = true;
-            this.lblPageNumShow.Font = new System.Drawing.Font("微軟正黑體", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.lblPageNumShow.Location = new System.Drawing.Point(611, 4);
-            this.lblPageNumShow.Name = "lblPageNumShow";
-            this.lblPageNumShow.Size = new System.Drawing.Size(161, 27);
-            this.lblPageNumShow.TabIndex = 15;
-            this.lblPageNumShow.Text = "第 0 頁／共 0 頁";
             // 
             // lblPaperNum
             // 
@@ -226,33 +215,31 @@
             this.btnClear.Font = new System.Drawing.Font("微軟正黑體", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.btnClear.Location = new System.Drawing.Point(494, 82);
             this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(45, 25);
+            this.btnClear.Size = new System.Drawing.Size(50, 25);
             this.btnClear.TabIndex = 20;
             this.btnClear.Text = "清除";
             this.btnClear.UseVisualStyleBackColor = true;
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             // 
-            // lnklblPageUp
+            // btnReport
             // 
-            this.lnklblPageUp.AutoSize = true;
-            this.lnklblPageUp.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.lnklblPageUp.Location = new System.Drawing.Point(612, 42);
-            this.lnklblPageUp.Name = "lnklblPageUp";
-            this.lnklblPageUp.Size = new System.Drawing.Size(81, 20);
-            this.lnklblPageUp.TabIndex = 21;
-            this.lnklblPageUp.TabStop = true;
-            this.lnklblPageUp.Text = "<<上一頁";
+            this.btnReport.Image = ((System.Drawing.Image)(resources.GetObject("btnReport.Image")));
+            this.btnReport.Location = new System.Drawing.Point(626, 6);
+            this.btnReport.Name = "btnReport";
+            this.btnReport.Size = new System.Drawing.Size(72, 71);
+            this.btnReport.TabIndex = 21;
+            this.btnReport.UseVisualStyleBackColor = true;
+            this.btnReport.Click += new System.EventHandler(this.btnReport_Click);
             // 
-            // lnklblPageDown
+            // btnExcel
             // 
-            this.lnklblPageDown.AutoSize = true;
-            this.lnklblPageDown.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.lnklblPageDown.Location = new System.Drawing.Point(691, 42);
-            this.lnklblPageDown.Name = "lnklblPageDown";
-            this.lnklblPageDown.Size = new System.Drawing.Size(81, 20);
-            this.lnklblPageDown.TabIndex = 22;
-            this.lnklblPageDown.TabStop = true;
-            this.lnklblPageDown.Text = "下一頁>>";
+            this.btnExcel.Image = ((System.Drawing.Image)(resources.GetObject("btnExcel.Image")));
+            this.btnExcel.Location = new System.Drawing.Point(705, 6);
+            this.btnExcel.Name = "btnExcel";
+            this.btnExcel.Size = new System.Drawing.Size(72, 71);
+            this.btnExcel.TabIndex = 22;
+            this.btnExcel.UseVisualStyleBackColor = true;
+            this.btnExcel.Click += new System.EventHandler(this.btnExcel_Click);
             // 
             // MainProgram
             // 
@@ -260,13 +247,12 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(784, 601);
-            this.Controls.Add(this.lnklblPageDown);
-            this.Controls.Add(this.lnklblPageUp);
+            this.Controls.Add(this.btnExcel);
+            this.Controls.Add(this.btnReport);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.lbl00);
             this.Controls.Add(this.txtPaperNum);
             this.Controls.Add(this.lblPaperNum);
-            this.Controls.Add(this.lblPageNumShow);
             this.Controls.Add(this.btnRefer);
             this.Controls.Add(this.lblUserIdNull);
             this.Controls.Add(this.lblUserId);
@@ -306,13 +292,12 @@
         private System.Windows.Forms.Label lblUserIdNull;
         private System.Windows.Forms.Button btnRefer;
         private System.Windows.Forms.DataGridView dgvDataShow;
-        private System.Windows.Forms.Label lblPageNumShow;
         private System.Windows.Forms.Label lblPaperNum;
         private System.Windows.Forms.TextBox txtPaperNum;
         private System.Windows.Forms.Label lbl00;
         private System.Windows.Forms.Button btnClear;
-        private System.Windows.Forms.LinkLabel lnklblPageUp;
-        private System.Windows.Forms.LinkLabel lnklblPageDown;
+        private System.Windows.Forms.Button btnReport;
+        private System.Windows.Forms.Button btnExcel;
     }
 }
 

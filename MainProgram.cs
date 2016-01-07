@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using System.Data.SqlClient;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace 傑偲單據修改紀錄查詢
 {
@@ -20,9 +17,8 @@ namespace 傑偲單據修改紀錄查詢
         string[] FOS_ID = { "FOSdDebitMain", "FOSdInvoiceMain", "FOSdOrderMain", "FOSdReceiveMain",
             "FOSdRwkPenaltyMain", "FOSdScrapMain" };
         string[] FOS_Name = { "折讓單", "對帳單", "加工單", "進貨單", "重工扣款單", "報廢扣款單" };
-        int TotalPage = 0;
-        int CurrentPageIndex = 1;
-        int PageSize = 20;
+        DataSet Read = new DataSet();
+        DataTable result = new DataTable();
 
         /// <summary>
         /// 限制TextBox只能輸入英文和數字
@@ -61,7 +57,6 @@ namespace 傑偲單據修改紀錄查詢
         /// <returns></returns>
         private DataTable SelectToDB(string DateStart,string DateEnd,string PaperId,string PaperNum,string UserId)
         {
-            DataSet Read = new DataSet();
             if (UserId == "" & PaperNum == "")
             {
                 SQLComm = "select PaperNum,SerialNum,UserId,UpdateTime,Difference from CURdPaperLog where " +
@@ -84,6 +79,8 @@ namespace 傑偲單據修改紀錄查詢
                 SQLComm = "select PaperNum,SerialNum,UserId,UpdateTime,Difference from CURdPaperLog where " +
                     "UserId='" + UserId + "' and PaperNum='" + PaperNum + "' order by PaperNum,SerialNum asc";
             }
+            //重新載入資料前，先將Table清空
+            result.Clear();
             using (SqlConnection sqlcon = new SqlConnection(SQLCon))
             {
                 using (SqlDataAdapter Load = new SqlDataAdapter(SQLComm, sqlcon))
@@ -94,15 +91,158 @@ namespace 傑偲單據修改紀錄查詢
             return Read.Tables["Result"];
         }
 
-
-        private void CalcuateTotalPages(DataTable dt)
+        /// <summary>
+        /// DataGridView Data Output to Excel
+        /// </summary>
+        private void OutputToExcel()
         {
-            int rowCount = dt.Rows.Count;
-            TotalPage = rowCount / PageSize;
-            if (rowCount % PageSize > 0)
+            //DataGridView沒有資料就不執行
+            if (dgvDataShow.Rows.Count <= 1)
             {
-                TotalPage += 1;
+                MessageBox.Show("沒有可滙出的資料！", "訊息", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                return;
             }
+            else
+            {
+                //建一個excel物件
+                Excel._Application excel = new Excel.Application();
+                //建一個excel物件下的工作簿
+                Excel._Workbook workbook = excel.Workbooks.Add();
+                //建二個excel物件下的工作表
+                Excel._Worksheet worksheet1 = excel.Worksheets.Add();
+                try
+                {
+                    string Date = DateTime.Now.ToString("yyyy-MM-dd");
+                    string UserDesktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                    string SaveFilePath = UserDesktop + @"\" + Date + ".xls";//檔案儲存的路徑
+                    //Set Excel Sheet Name
+                    worksheet1.Name = cboPaperId.Text + "_修改查詢";
+
+                    //Call ProgressBar Window and Set Default Values
+                    PGB pgb = new PGB();
+                    pgb.progressBar1.Minimum = 0;
+                    pgb.progressBar1.Maximum = dgvDataShow.Columns.Count + (dgvDataShow.Rows.Count - 1);
+                    pgb.progressBar1.Step = 1;
+                    pgb.progressBar1.Value = 0;
+                    pgb.progressBar1.Style = ProgressBarStyle.Continuous;
+                    pgb.Show();
+
+                    //填入dgvWPRshow欄位名稱至worksheet1
+                    for (int i = 0; i < dgvDataShow.Columns.Count; i++)
+                    {
+                        worksheet1.Cells[1, i + 1] = dgvDataShow.Columns[i].HeaderText;
+                        pgb.progressBar1.Value++;
+                        Application.DoEvents();
+                    }
+                    //填入dgvWPRshow資料至worksheet1
+                    for (int i = 0; i < dgvDataShow.Rows.Count - 1; i++)
+                    {
+                        pgb.progressBar1.Value++;
+                        Application.DoEvents();
+                        for (int j = 0; j < dgvDataShow.Columns.Count; j++)
+                        {
+                            if (dgvDataShow[j, i].ValueType == typeof(string))
+                            {
+                                worksheet1.Cells[i + 2, j + 1] = "'" + dgvDataShow[j, i].Value.ToString();
+                            }
+                            else
+                            {
+                                worksheet1.Cells[i + 2, j + 1] = dgvDataShow[j, i].Value.ToString();
+                            }
+                        }
+                    }
+                    
+                    //設定滙出後，欄位寛度自動配合資料調整
+                    worksheet1.Cells.EntireRow.AutoFit();
+                    //自動調整列高
+                    worksheet1.Cells.EntireColumn.AutoFit();
+                                                           
+                    //設置禁止彈出覆蓋或儲存的彈跳視窗
+                    excel.DisplayAlerts = false;
+                    excel.AlertBeforeOverwriting = false;
+                    //將檔案儲存到SaveFile指定的位置，儲存前先判斷系統上的Office版本號
+                    if (excel.Application.Version == "11.0")//Office 2003
+                    {
+                        excel.ActiveWorkbook.SaveAs(SaveFilePath);
+                    }
+                    else
+                    {
+                        //Office 2003 Up，FileFormat: Excel.XlFileFormat.xlExcel8=>指定Excel 2003 xls格式
+                        excel.ActiveWorkbook.SaveAs(SaveFilePath, FileFormat: Excel.XlFileFormat.xlExcel8);
+                    }
+                    pgb.Close();
+                    MessageBox.Show("已將資料滙出並存放置" + SaveFilePath, "訊息", MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    //關閉工作簿和結束Excel程式
+                    workbook.Close();
+                    excel.Quit();
+                    //釋放資源
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(excel);
+                    excel = null;
+                    workbook = null;
+                    worksheet1 = null;
+                    GC.Collect();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Converts the DataGridView to DataTable
+        /// </summary>
+        /// <param name="dgv">DataGridView Name</param>
+        /// <param name="tblName"></param>
+        /// <param name="minRow"></param>
+        /// <returns></returns>
+        private DataTable DataGridViewToDataTable(DataGridView dgv, String tblName = "", int minRow = 0)
+        {
+            DataTable dt = new DataTable();
+            PGB pgb = new PGB();
+            pgb.progressBar1.Minimum = 0;
+            pgb.progressBar1.Maximum = dgvDataShow.Columns.Count + dgvDataShow.Rows.Count;
+            pgb.progressBar1.Step = 1;
+            pgb.progressBar1.Value = 0;
+            pgb.progressBar1.Style = ProgressBarStyle.Continuous;
+            pgb.Show();
+            // Header columns  
+            foreach (DataGridViewColumn column in dgv.Columns)
+            {
+                pgb.progressBar1.Value++;
+                Application.DoEvents();
+                DataColumn dc = new DataColumn(column.HeaderText.ToString());
+                dt.Columns.Add(dc);
+            }
+            // Data cells  
+            for (int i = 0; i < dgv.Rows.Count; i++)
+            {
+                pgb.progressBar1.Value++;
+                Application.DoEvents();
+                DataGridViewRow row = dgv.Rows[i];
+                DataRow dr = dt.NewRow();
+                for (int j = 0; j < dgv.Columns.Count; j++)
+                {
+                    dr[j] = (row.Cells[j].Value == null) ? "" : row.Cells[j].Value.ToString();
+                }
+                dt.Rows.Add(dr);
+            }
+            // Related to the bug arround min size when using ExcelLibrary for export  
+            for (int i = dgv.Rows.Count; i < minRow; i++)
+            {
+                DataRow dr = dt.NewRow();
+                for (int j = 0; j < dt.Columns.Count; j++)
+                {
+                    dr[j] = " ";
+                }
+                dt.Rows.Add(dr);
+            }
+            pgb.Close();
+            return dt;
         }
 
         public MainProgram()
@@ -155,7 +295,7 @@ namespace 傑偲單據修改紀錄查詢
                     }
                 }
             }
-            DataTable result = SelectToDB(dtpStartDate.Value.ToString("yyyy-MM-dd 00:00:00"), dtpEndDate.Value.ToString
+            result = SelectToDB(dtpStartDate.Value.ToString("yyyy-MM-dd 00:00:00"), dtpEndDate.Value.ToString
                 ("yyyy-MM-dd 23:59:59"), paper, txtPaperNum.Text.Trim(), txtUserId.Text.Trim());
             dgvDataShow.DataSource = result;
             dgvDataShow.Columns["PaperNum"].HeaderText = "單據號碼";
@@ -181,14 +321,46 @@ namespace 傑偲單據修改紀錄查詢
                     dgvDataShow.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 }
             }
-            CalcuateTotalPages(result);
-            lblPageNumShow.Text = "第 0 頁／共 " + TotalPage.ToString() + " 頁";
         }
 
         private void btnClear_Click(object sender, EventArgs e)
         {
             txtUserId.Text = "";
             txtPaperNum.Text = "";
+        }
+
+        private void btnReport_Click(object sender, EventArgs e)
+        {
+            if (dgvDataShow.Rows.Count <= 1)
+            {
+                MessageBox.Show("沒有可滙出的資料！", "訊息", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                return;
+            }
+            else
+            {
+                DataSet ds = new DataSet();
+                DataTable rpt = new DataTable();
+                rpt = DataGridViewToDataTable(dgvDataShow);
+                ds.Tables.Add(rpt);
+                ds.WriteXmlSchema("rpt.xml");
+                try
+                {
+                    CrystalReport1 cr = new CrystalReport1();
+                    cr.SetDataSource(ds);
+                    Report rp = new Report();
+                    rp.crystalReportViewer1.ReportSource = cr;
+                    rp.Show();
+                }
+                catch(Exception ex)
+                {
+                    throw ex;
+                }
+            }
+        }
+
+        private void btnExcel_Click(object sender, EventArgs e)
+        {
+            OutputToExcel();
         }
     }
 }
